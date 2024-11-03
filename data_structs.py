@@ -16,8 +16,8 @@ class CAM_table:
     def __init__(self):
         self.table = {}
 
-    def add_entry(self, mac: bytes, interface: int):
-        self.table[mac] = interface
+    def add_entry(self, mac: bytes, interface_id: int):
+        self.table[mac] = interface_id
     
     def entry_exists(self, mac: bytes):
         if mac in self.table:
