@@ -15,16 +15,6 @@ switch_priority = None
 # like the name, type (trunk or access, and eventually the vlan_id)
 interfaces = {}
 
-def print_frame(dest_mac, src_mac, ethertype, vlan_id, interface, length):
-    print("-----------------------------------")
-    print("Received frame of size {} on interface {}".format(length, interface), flush=True)
-    p_dest_mac = ':'.join(f'{b:02x}' for b in dest_mac)
-    p_src_mac = ':'.join(f'{b:02x}' for b in src_mac)
-    print(f'Destination MAC: {p_dest_mac}')
-    print(f'Source MAC: {p_src_mac}')
-    print(f'EtherType: {hex(ethertype)}')
-    print('VLAN_ID: ', vlan_id)
-
 # Parses the switch's information from the config file
 def parse_switch_info(switch_id):
     path = "configs/switch" + str(switch_id) + ".cfg"
@@ -161,7 +151,6 @@ def main():
 
         dest_mac, src_mac, ethertype, recv_vlan_id = parse_ethernet_header(data)
 
-        print_frame(dest_mac, src_mac, ethertype, recv_vlan_id, interface_id, length)
         cam.table[src_mac] = interfaces[interface_id]
         forward_frame(interface_id, data, length, dest_mac, recv_vlan_id)
 
