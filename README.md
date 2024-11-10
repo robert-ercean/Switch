@@ -7,6 +7,8 @@
 ## Topology
 - As mentioned above, multiple switches share the same implementation within a virtual topology created using *mininet*. The switches are tested by running the *test scripts* inside the folder `checker`, or by manually sending `control packets` with `ICMP` or similar protocols. The topology used for testing the functionalities can be seen below. 
 
+![image](switch_topo.png)
+
 ## CAM Table
 
 - Each switch maintains a local `CAM Table` used to store associations between *MAC Addresses* and *physical interfaces*. Whenever a switch receives a frame through one of its interfaces, before any parsing and forwarding decisions of the frame being made, the switch updates the `CAM Table entry` of the respective interface.
