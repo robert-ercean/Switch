@@ -24,8 +24,9 @@
 | Field Name |  Data Type    |     Meaning |
 | ----------- | --- |----------- |
 | ID | int | The port's unique ID within the switch's config|
+| STATE | str | The port's state within STP, takes values: `DESIGNATED` / `BLOCKING` / `LISTENING` |
 | VLAN ID | int | The port's VLAN ID|
-| Name | str | The port's name (used for debugging purposes) |
+| Name | str | The port's name inside the config file (used for debugging purposes) |
 | Type | str | Describes whether a port is of type `ACCESSS` or `TRUNK`|
 
 - **This implementation has no support for Native VLANs**
@@ -52,13 +53,26 @@
 - Set fields PCP and DEI to 0.
 
 ## Custom STP Protocol
-
+- To avoid bridge loops in a redundant network topology, we use the STP protocol to *elect a root bridge leader* and *block certain ports* to avoid problems such as *broadcast storms*
 - For easier handling of STP and because each switch within the testing vitual topology will have support of this, a custom header is created for easier maneuvering of the frames:
-# MAC_MULTICAST(6 BYTES) | OWN_BID (8 BYTES) | ROOT_BRIDGE_ID (8 BYTES) | ROOT_PATH_COST(4 BYTES)
 
 | Field Name |  Data Size    |  Meaning |
 | ----------- | --- |-----------|
-| MAC_MULTICAST | 6 BYTES | The port's unique ID within the switch's config|
-| OWN_BID | 8 BYTES | The port's VLAN ID|
-| ROOT_BRIDGE_ID | 8 BYTES | The port's name (used for debugging purposes) |
-| ROOT_PATH_COST | 4 BYTES | Describes whether a port is of type `ACCESSS` or `TRUNK`|
+| MAC_MULTICAST | 6 BYTES | Used for checking wether the frame is a BPDU frame or not |
+| OWN_BID | 8 BYTES | The BPDU frame's sender BID|
+| ROOT_BRIDGE_ID | 8 BYTES | The BPDU frame's sender ROOT_BID |
+| ROOT_PATH_COST | 4 BYTES | The BPDU frame's sender path cost to the ROOT BRIDGE|
+
+- Each switch, inside a different thread than the main thread, sends a bpdu frame every `1 second` to the other switches in the topology.
+- Each trunk link has a `mock value of 100 Mbps`, therefore each link will have a fixed cost of `10`.
+- Once a BPDU frame is received (identified by the special `Multicast MAC Address`), we parse the frame inside `parse_bpdu_frame()` and make new decisions about the root bridge leader inside `handle_bpdu_frame()`.
+- The flow of the custom STP protocol follows the general STP protocol flow:
+    - When firstly initialized, each switch considers itself the ROOT BRIDGE and sets all of its ports to the state `DESIGNATED`
+    - After receiving a BPDU frame, it parses the info and makes decisions based on the sender's BID, sender's ROOT_BID and sender's ROOT_PATH_COST.
+
+
+### Other mentions
+- Frames are being sent / received using `Linux sockets` managed by wrapper python functions over C-implemented functions.
+- The wrappers can be found in `wrappers.py`
+- The C functions can be found inside the folder `lib`
+- The switches' config files are found inside the folder `configs`
